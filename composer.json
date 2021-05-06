@@ -1,0 +1,10 @@
+{
+    "name": "ocdladefense/wp-salesforce",
+    "description": "WordPress plugin to connect to the Salesforce.",
+    "type": "wordpress-theme",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "ocdladefense/lib-salesforce-rest-api": "dev-main"
+    }
+}
