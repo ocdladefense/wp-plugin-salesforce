@@ -1,8 +1,13 @@
 <?php
 
+
 /**
  * @package SalesforcePlugin
  */
+
+use Salesforce\OAuthRequest;
+use Salesforce\RestApiRequest;
+
 /*
 Plugin Name: Salesforce Plugin
 Plugin URI: 
@@ -40,3 +45,69 @@ function include_page_template($template)
 
     return $template;
 }
+
+function do_something()
+{
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $tokenUrl = "https://test.salesforce.com/services/oauth2/token";
+    $username = "kalashnikovr@ocdla.com.ocdpartial";
+    $password = "Klaipeda1976";
+    $securityToken = "9XhZ0NPPwRpHDLJEu3iOvb8m";
+
+
+    // make a connection to SF
+    $req = new OAuthRequest($tokenUrl); //"https://login.salesforce.com/services/oauth2/token");
+
+    $body = array(
+        "grant_type"             => "password",
+        "client_id"             => $clientId,
+        "client_secret"            => $clientSecret,
+        "username"                => $username,
+        "password"                => $password . $securityToken
+    );
+
+    $body = http_build_query($body);
+    $contentType = new Http\HttpHeader("Content-Type", "application/x-www-form-urlencoded");
+    $req->addHeader($contentType);
+
+    $req->setBody($body);
+    $req->setMethod("POST");
+    // Sending a HttpResponse class as a Header to represent the HttpResponse.
+    $req->addHeader(new Http\HttpHeader("X-HttpClient-ResponseClass", "\Salesforce\OAuthResponse"));
+
+    $resp = $req->authorize();
+
+    // Testing...
+    //var_dump($resp);
+    //exit;
+    //
+
+    //if (!$resp->success()) {
+    //throw new Exception("OAUTH_RESPONSE_ERROR: {$resp->getErrorMessage()}");
+    //}
+
+    $api = new RestApiRequest("https://cs169.salesforce.com", "00D6w0000008lZJ!ASAAQKMQKuhHHMnXdUVAYb5tDqYscEjLUDEAecvyHJb6tBteajZ9uF8mK_UvuNWdb0to6CdXWvqXsCUKkEyb6wnm4HKv8gQ3");
+
+    // Testing...
+    //var_dump($api);
+    //exit;
+    //
+
+    // List commiittees and related contact info for each member
+    $results = $api->query("SELECT id, Name, (SELECT Contact__r.Id, Contact__r.Title, Contact__r.Name, Role__c, Contact__r.Email, Contact__r.Phone FROM Relationships__r) FROM Committee__c");
+    print "<pre>";
+    print print_r($results, true);
+    print "</pre>";
+
+    var_dump($results);
+    exit;
+
+    // run query for 10 contacts
+    // var_dump and exit
+
+    //print 'hello words!';
+    ///exit;
+}
+
+add_action('wp_loaded', 'do_something');
