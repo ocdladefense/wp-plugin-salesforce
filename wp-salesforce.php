@@ -78,21 +78,11 @@ function do_something()
 
     $resp = $req->authorize();
 
-    // Testing...
-    //var_dump($resp);
-    //exit;
-    //
+    if (!$resp->success()) {
+        throw new Exception("OAUTH_RESPONSE_ERROR: {$resp->getErrorMessage()}");
+    }
 
-    //if (!$resp->success()) {
-    //throw new Exception("OAUTH_RESPONSE_ERROR: {$resp->getErrorMessage()}");
-    //}
-
-    $api = new RestApiRequest("https://cs169.salesforce.com", "00D6w0000008lZJ!ASAAQKMQKuhHHMnXdUVAYb5tDqYscEjLUDEAecvyHJb6tBteajZ9uF8mK_UvuNWdb0to6CdXWvqXsCUKkEyb6wnm4HKv8gQ3");
-
-    // Testing...
-    //var_dump($api);
-    //exit;
-    //
+    $api = new RestApiRequest($resp->getInstanceUrl(), $resp->getAccessToken());
 
     // List commiittees and related contact info for each member
     $results = $api->query("SELECT id, Name, (SELECT Contact__r.Id, Contact__r.Title, Contact__r.Name, Role__c, Contact__r.Email, Contact__r.Phone FROM Relationships__r) FROM Committee__c");
