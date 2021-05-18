@@ -26,8 +26,58 @@ defined('ABSPATH') or die('You shall not pass!');
 define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 // Adding a template to the 'Page Attributes' dropdown and including our custom template
-add_filter('theme_page_templates', 'add_page_template');
-add_filter('template_include', 'include_page_template', 99);
+//add_filter('theme_page_templates', 'add_page_template');
+//add_filter('template_include', 'include_page_template', 99);
+add_action( 'init', 'process_oauth_redirect_uri' );
+ 
+function process_oauth_redirect_uri() {
+    $config = getConfig();
+
+    $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
+    if($request_uri == "/ocdla-prod/my-account"){
+        //get access url from $_GET["code"]
+        $config = new Salesforce\OAuthConfig($config);
+        $oauth = Salesforce\OAuthRequest::newAccessTokenRequest($config, "webserver");
+        $resp = $oauth->authorize();
+        var_dump($resp);
+        
+        $accessToken = $resp->getAccessToken();
+        $instanceUrl = $resp->getInstanceUrl();
+        //get user info with access token
+		$url = "/services/oauth2/userinfo?access_token={$accessToken}";
+		$req = new RestApiRequest($instanceUrl, $accessToken);
+		$resp = $req->send($url);
+		$oauth_user = $resp->getBody();
+        var_dump($oauth_user);
+
+        //set wordpress username and their session
+        $username = "admin@ocdla.org";//$oauth_user["preferred_username"]
+        user_login($username);
+        var_dump($_GET);
+        exit;
+
+
+    }
+}
+
+
+
+
+function user_login($email){
+    $user = get_user_by('email', $email );
+
+    // Redirect URL //
+    if ( !is_wp_error( $user ) )
+    {
+        wp_clear_auth_cookie();
+        wp_set_current_user ( $user->ID );
+        wp_set_auth_cookie  ( $user->ID );
+
+        //$redirect_to = user_admin_url();
+        //wp_safe_redirect( $redirect_to );
+        //exit();
+    }
+}
 
 function add_page_template($templates)
 {
@@ -46,8 +96,118 @@ function include_page_template($template)
     return $template;
 }
 
-function do_something()
+function salesforce_connect($flow = "usernamepassword")
 {
+    if($flow == "usernamepassword"){
+        return salesforce_username();
+    }
+
+    if($flow == "webserver"){
+        return salesforce_webserver();
+    }
+}
+
+function getConfig(){
+    return array(
+    "ocdla-sandbox" =>   array(
+            //"highscope-sandbox-2.0--webserver--user" 
+            "default" => true,
+            "sandbox" => true, // Might be used to determine domain for urls
+            "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
+            "client_secret" => "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1",
+            "auth" => array(
+                "saml" => array(),
+                "oauth" => array(
+                    "usernamepassword" => array(
+                        "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
+                        "username" => "jbernal@highscope.org.ltdglobal",
+                        "password" => "brjcis12",
+                        "security_token" => "oDMvMlASM8R6H7Uf5o0FjLxG"
+                    ),
+                    "webserver" => array(
+                        "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
+                        "auth_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/authorize",	// Web server ouath flow has two oauth urls.
+                        "redirect_url" => "http://localhost/oauth/api/request",
+                        "callback_url" => "http://localhost/my-account"
+                    )
+                )
+            )
+        )
+    );
+}
+
+function salesforce_webserver(){
+
+    // $config = new Salesforce\OAuthCOnfig(getConfig());
+    // var_dump(Salesforce\OAuth::start($config, $authFlow));
+    // exit;
+
+
+
+    
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
+
+//Location: http://localhost/oauth/api/request
+//this calls a function to set the access token
+// function oauthFlowAccessToken(){
+
+//     $info = json_decode($_GET["state"], true);
+//     $connectedApp = $info["connected_app_name"];
+//     $flow = $info["flow"];
+
+//     $config = get_oauth_config($connectedApp);
+
+//     $config->setAuthorizationCode($_GET["code"]);
+
+//     $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
+
+//     $resp = $oauth->authorize();
+
+//     if(!$resp->success()){
+
+//         throw new OAuthException($resp->getErrorMessage());
+//     }
+
+//     OAuth::setSession($connectedApp, $flow, $resp->getInstanceUrl(), $resp->getAccessToken(), $resp->getRefreshToken());
+
+//     $resp2 = new HttpResponse();
+
+//     $flowConfig = $config->getFlowConfig($flow);
+
+//     $resp2->addHeader(new HttpHeader("Location", $flowConfig->getCallbackUrl()));
+
+//     return $resp2;
+// }
+
+
+//then salesforce_webserver_step2
+//Location http://localhost/my-account
+function salesforce_webserver_step2($config){
+    return Salesforce\OAuthRequest::newAccessTokenRequest($config,"webserver");
+}
+
+
+
+
+function salesforce_username(){
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
     $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
     $tokenUrl = "https://test.salesforce.com/services/oauth2/token";
@@ -100,4 +260,4 @@ function do_something()
     ///exit;
 }
 
-add_action('wp_loaded', 'do_something');
+//add_action('wp_loaded', 'salesforce_connect');
