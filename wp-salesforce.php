@@ -31,15 +31,16 @@ define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 add_action( 'init', 'process_oauth_redirect_uri' );
  
 function process_oauth_redirect_uri() {
-    $config = getConfig();
+    $config = getConfig()["ocdla-sandbox"];
 
     $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
     if($request_uri == "/ocdla-prod/my-account"){
         //get access url from $_GET["code"]
-        $config = new Salesforce\OAuthConfig($config);
-        $oauth = Salesforce\OAuthRequest::newAccessTokenRequest($config, "webserver");
+        $config = new OAuthConfig($config);
+        $config->setAuthorizationCode($_GET["code"]);
+        
+        $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
         $resp = $oauth->authorize();
-        var_dump($resp);
         
         $accessToken = $resp->getAccessToken();
         $instanceUrl = $resp->getInstanceUrl();
@@ -48,15 +49,10 @@ function process_oauth_redirect_uri() {
 		$req = new RestApiRequest($instanceUrl, $accessToken);
 		$resp = $req->send($url);
 		$oauth_user = $resp->getBody();
-        var_dump($oauth_user);
 
         //set wordpress username and their session
-        $username = "admin@ocdla.org";//$oauth_user["preferred_username"]
+        $username = $oauth_user["preferred_username"];
         user_login($username);
-        var_dump($_GET);
-        exit;
-
-
     }
 }
 
@@ -120,15 +116,15 @@ function getConfig(){
                 "oauth" => array(
                     "usernamepassword" => array(
                         "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "username" => "jbernal@highscope.org.ltdglobal",
-                        "password" => "brjcis12",
-                        "security_token" => "oDMvMlASM8R6H7Uf5o0FjLxG"
+                        "username" => "membernation@ocdla.com.ocdpartial",
+                        "password" => "asdi49ir4",
+                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
                     ),
                     "webserver" => array(
-                        "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "auth_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/authorize",	// Web server ouath flow has two oauth urls.
+                        "token_url" => "https://test.salesforce.com/services/oauth2/token",
+                        "auth_url" => "https://test.salesforce.com/services/oauth2/authorize",	// Web server ouath flow has two oauth urls.
                         "redirect_url" => "http://localhost/oauth/api/request",
-                        "callback_url" => "http://localhost/my-account"
+                        "callback_url" => "http://localhost/ocdla-prod/my-account"
                     )
                 )
             )
