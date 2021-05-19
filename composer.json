@@ -5,7 +5,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "ocdladefense/lib-salesforce-rest-api": "dev-main",
-        "ocdladefence/lib-oauth-config": "dev-development"
+        "ocdladefence/lib-oauth-config": "dev-development",
+        "ocdladefense/lib-salesforce-rest-api": "dev-main"
     }
 }
