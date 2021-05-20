@@ -55,7 +55,7 @@ function process_oauth_redirect_uri() {
 		$sf_userInfo = $resp->getBody();
 
         // Get the salesforce user's "preferred username" from the "user info".
-        $username = $sf_userInfo["preferred_username"];
+        $username = getWpComplientUsername($sf_userInfo["preferred_username"]);
 
         // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
         if(!username_exists($username)){
@@ -64,10 +64,12 @@ function process_oauth_redirect_uri() {
             $role = $isAdministrator ? "administrator" : "subscriber";  // Salesforce sets "user_type" to "STANDARD" for admin and customer users? 
 
             $params = array(
-                "role" => $role,
-                "user_login" => $username,
-                "user_email" => $sf_userInfo["email"],
-                "user_pass"  => $wp_generate_password(12, false)
+                "role"          => $role,
+                "user_login"    => $username,
+                "first_name"    => $sf_userInfo["given_name"],
+                "last_name"     => $sf_userInfo["family_name"],
+                "user_email"    => $sf_userInfo["email"],
+                "user_pass"     => wp_generate_password(12, false)
             );
 
             $wp_userId = wp_insert_user($params);
@@ -75,16 +77,31 @@ function process_oauth_redirect_uri() {
             // Need to find out what this email looks like?  
             wp_new_user_notification($wp_userId, "user");
         }
-        //var_dump($username, $sf_userInfo); exit;
 
         user_login($username);
     }
 }
 
+function getWpComplientUsername($username) {
+
+    $nameParts = explode(".", $username);
+
+    $complientName = $nameParts[0] . "." . $nameParts[1];
+
+    for($i = 2; $i < count($nameParts); $i++) {
+
+        $complientName = $complientName . $nameParts[$i];
+    }
+
+    return $complientName;
+}
 
 
-function user_login($email){
-    $user = get_user_by('email', $email );
+
+
+function user_login($username) {
+
+    $user = get_user_by('login', $username);
 
     // Redirect URL //
     if ( !is_wp_error( $user ) )
@@ -92,10 +109,11 @@ function user_login($email){
         wp_clear_auth_cookie();
         wp_set_current_user ( $user->ID );
         wp_set_auth_cookie  ( $user->ID );
+    }
 
-        //$redirect_to = user_admin_url();
-        //wp_safe_redirect( $redirect_to );
-        //exit();
+    if(!is_user_logged_in()) {
+
+        throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
     }
 }
 
@@ -227,37 +245,6 @@ function salesforce_oauth_url_customer(){
     return $auth_url."?".$body;
 }
 
-//Location: http://localhost/oauth/api/request
-//this calls a function to set the access token
-// function oauthFlowAccessToken(){
-
-//     $info = json_decode($_GET["state"], true);
-//     $connectedApp = $info["connected_app_name"];
-//     $flow = $info["flow"];
-
-//     $config = get_oauth_config($connectedApp);
-
-//     $config->setAuthorizationCode($_GET["code"]);
-
-//     $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
-
-//     $resp = $oauth->authorize();
-
-//     if(!$resp->success()){
-
-//         throw new OAuthException($resp->getErrorMessage());
-//     }
-
-//     OAuth::setSession($connectedApp, $flow, $resp->getInstanceUrl(), $resp->getAccessToken(), $resp->getRefreshToken());
-
-//     $resp2 = new HttpResponse();
-
-//     $flowConfig = $config->getFlowConfig($flow);
-
-//     $resp2->addHeader(new HttpHeader("Location", $flowConfig->getCallbackUrl()));
-
-//     return $resp2;
-// }
 
 
 //then salesforce_webserver_step2
@@ -314,12 +301,4 @@ function salesforce_username(){
 
     var_dump($results);
     exit;
-
-    // run query for 10 contacts
-    // var_dump and exit
-
-    //print 'hello words!';
-    ///exit;
 }
-
-//add_action('wp_loaded', 'salesforce_connect');
