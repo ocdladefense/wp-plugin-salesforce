@@ -31,10 +31,16 @@ define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 add_action( 'init', 'process_oauth_redirect_uri' );
  
 function process_oauth_redirect_uri() {
-    $config = getConfig()["ocdla-sandbox"];
+
+    $config = getCustomerConfig()["ocdla-sandbox"];
 
     $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
     if($request_uri == "/ocdla-prod/my-account"){
+
+        user_login("membernation@ocdla.comocdpartial");
+
+        return null;
+        
         //get access url from $_GET["code"]
         $config = new OAuthConfig($config);
         $config->setAuthorizationCode($_GET["code"]);
@@ -48,14 +54,39 @@ function process_oauth_redirect_uri() {
 		$url = "/services/oauth2/userinfo?access_token={$accessToken}";
 		$req = new RestApiRequest($instanceUrl, $accessToken);
 		$resp = $req->send($url);
-		$oauth_user = $resp->getBody();
+        var_dump($resp);exit;
+		$sf_userInfo = $resp->getBody();
 
         //set wordpress username and their session
-        $username = $oauth_user["preferred_username"];
+        $username = $sf_userInfo["preferred_username"];
+
+        if(!username_exists($username)){
+
+            $password = wp_generate_password(12, false);
+            $email = $sf_userInfo["email"];
+
+            // $wp_userId = wp_create_user($username, $password, $email); 
+
+            $isAdministrator = $sf_userInfo["user_type"] == "STANDARD";
+            $role = $isAdministrator ? "administrator" : "subscriber";
+
+            $params = array(
+                "role" => $role,
+                "user_login" => $username,
+                "user_email" => $email,
+                "user_pass"  => $password
+            );
+
+            $wp_userId = wp_insert_user($params);
+
+            // Need to find out what this email looks like?  
+            wp_new_user_notification($wp_userId, "user");
+        }
+        //var_dump($username, $sf_userInfo); exit;
+
         user_login($username);
     }
 }
-
 
 
 
@@ -132,7 +163,36 @@ function getConfig(){
     );
 }
 
-function salesforce_webserver(){
+function getCustomerConfig(){
+    return array(
+    "ocdla-sandbox" =>   array(
+            //"highscope-sandbox-2.0--webserver--user" 
+            "default" => true,
+            "sandbox" => true, // Might be used to determine domain for urls
+            "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
+            "client_secret" => "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1",
+            "auth" => array(
+                "saml" => array(),
+                "oauth" => array(
+                    "usernamepassword" => array(
+                        "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
+                        "username" => "membernation@ocdla.com.ocdpartial",
+                        "password" => "asdi49ir4",
+                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
+                    ),
+                    "webserver" => array(
+                        "token_url" => "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/token",
+                        "auth_url" => "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/authorize",	// Web server ouath flow has two oauth urls.
+                        "redirect_url" => "http://localhost/oauth/api/request",
+                        "callback_url" => "http://localhost/ocdla-prod/my-account"
+                    )
+                )
+            )
+        )
+    );
+}
+
+function salesforce_oauth_url_admin(){
 
     // $config = new Salesforce\OAuthCOnfig(getConfig());
     // var_dump(Salesforce\OAuth::start($config, $authFlow));
@@ -144,6 +204,35 @@ function salesforce_webserver(){
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
     $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
     $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
+
+function salesforce_oauth_url_customer(){
+
+    // $config = new Salesforce\OAuthCOnfig(getConfig());
+    // var_dump(Salesforce\OAuth::start($config, $authFlow));
+    // exit;
+
+
+
+    
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/authorize";
 
 
     $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
