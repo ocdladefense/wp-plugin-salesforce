@@ -32,49 +32,42 @@ add_action( 'init', 'process_oauth_redirect_uri' );
  
 function process_oauth_redirect_uri() {
 
-    $config = getCustomerConfig()["ocdla-sandbox"];
-
     $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
     if($request_uri == "/ocdla-prod/my-account"){
 
-        user_login("membernation@ocdla.comocdpartial");
-
-        return null;
-        
-        //get access url from $_GET["code"]
-        $config = new OAuthConfig($config);
+        // Get an "OAuthConfig" object for a given connected app configuration array
+        $configArray = getConfig("ocdla-sandbox-customer");
+        $config = new OAuthConfig($configArray);
         $config->setAuthorizationCode($_GET["code"]);
         
+        // Get an access token and an instance url from the "OAuthResponse".
         $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
-        $resp = $oauth->authorize();
+        $oauthResponse = $oauth->authorize();
         
-        $accessToken = $resp->getAccessToken();
-        $instanceUrl = $resp->getInstanceUrl();
-        //get user info with access token
-		$url = "/services/oauth2/userinfo?access_token={$accessToken}";
+        $accessToken = $oauthResponse->getAccessToken();
+        $instanceUrl = $oauthResponse->getInstanceUrl();
+
+        // Get the salesforce "user info" for the current user.
+		$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
 		$req = new RestApiRequest($instanceUrl, $accessToken);
-		$resp = $req->send($url);
-        var_dump($resp);exit;
+		$resp = $req->send($userInfoEndpoint);
+
 		$sf_userInfo = $resp->getBody();
 
-        //set wordpress username and their session
+        // Get the salesforce user's "preferred username" from the "user info".
         $username = $sf_userInfo["preferred_username"];
 
+        // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
         if(!username_exists($username)){
 
-            $password = wp_generate_password(12, false);
-            $email = $sf_userInfo["email"];
-
-            // $wp_userId = wp_create_user($username, $password, $email); 
-
-            $isAdministrator = $sf_userInfo["user_type"] == "STANDARD";
-            $role = $isAdministrator ? "administrator" : "subscriber";
+            $isAdministrator = $sf_userInfo["user_type"] == "STANDARD"; // Need a better way to determine the role.
+            $role = $isAdministrator ? "administrator" : "subscriber";  // Salesforce sets "user_type" to "STANDARD" for admin and customer users? 
 
             $params = array(
                 "role" => $role,
                 "user_login" => $username,
-                "user_email" => $email,
-                "user_pass"  => $password
+                "user_email" => $sf_userInfo["email"],
+                "user_pass"  => $wp_generate_password(12, false)
             );
 
             $wp_userId = wp_insert_user($params);
@@ -134,9 +127,9 @@ function salesforce_connect($flow = "usernamepassword")
     }
 }
 
-function getConfig(){
-    return array(
-    "ocdla-sandbox" =>   array(
+function getConfig($configName){
+    $configs = array(
+        "ocdla-sandbox-admin" => array(
             //"highscope-sandbox-2.0--webserver--user" 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
@@ -159,13 +152,8 @@ function getConfig(){
                     )
                 )
             )
-        )
-    );
-}
-
-function getCustomerConfig(){
-    return array(
-    "ocdla-sandbox" =>   array(
+        ),
+        "ocdla-sandbox-customer" => array(
             //"highscope-sandbox-2.0--webserver--user" 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
@@ -188,19 +176,15 @@ function getCustomerConfig(){
                     )
                 )
             )
+                    
         )
     );
+
+    return $configs[$configName];
 }
 
 function salesforce_oauth_url_admin(){
 
-    // $config = new Salesforce\OAuthCOnfig(getConfig());
-    // var_dump(Salesforce\OAuth::start($config, $authFlow));
-    // exit;
-
-
-
-    
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
     $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
     $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
@@ -222,13 +206,6 @@ function salesforce_oauth_url_admin(){
 }
 
 function salesforce_oauth_url_customer(){
-
-    // $config = new Salesforce\OAuthCOnfig(getConfig());
-    // var_dump(Salesforce\OAuth::start($config, $authFlow));
-    // exit;
-
-
-
     
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
     $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
