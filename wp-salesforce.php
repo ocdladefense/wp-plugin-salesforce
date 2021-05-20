@@ -28,6 +28,7 @@ define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 // Adding a template to the 'Page Attributes' dropdown and including our custom template
 //add_filter('theme_page_templates', 'add_page_template');
 //add_filter('template_include', 'include_page_template', 99);
+// add_action('init', 'user_form_template');
 add_action( 'init', 'process_oauth_redirect_uri' );
  
 function process_oauth_redirect_uri() {
@@ -68,8 +69,7 @@ function process_oauth_redirect_uri() {
                 "user_login"    => $username,
                 "first_name"    => $sf_userInfo["given_name"],
                 "last_name"     => $sf_userInfo["family_name"],
-                "user_email"    => $sf_userInfo["email"],
-                "user_pass"     => wp_generate_password(12, false)
+                "user_email"    => $sf_userInfo["email"]
             );
 
             $wp_userId = wp_insert_user($params);
@@ -81,6 +81,7 @@ function process_oauth_redirect_uri() {
         user_login($username);
     }
 }
+
 
 function getWpComplientUsername($username) {
 
@@ -123,6 +124,7 @@ function add_page_template($templates)
     return $templates;
 }
 
+
 function include_page_template($template)
 {
     $newTemplate = MY_PLUGIN_DIR . '/templates/test-tpl.php';
@@ -133,6 +135,56 @@ function include_page_template($template)
 
     return $template;
 }
+
+// Show the alternate login screen
+function user_form_template() {
+
+    if (strpos($_SERVER['REQUEST_URI'], "loggedout=true") !== false) {
+
+        include(MY_PLUGIN_DIR . 'templates/alternate-login.tpl.php');
+        
+        exit;
+    }
+}
+
+
+add_action('init', 'add_urls');
+// add_filter('request', 'set_query_vars');
+// add_action('template_redirect', 'show_login');
+
+
+
+
+function add_urls() {
+
+    $urls = array("sso/login");
+
+    foreach($urls as $url) {
+
+        add_rewrite_endpoint($url, EP_PERMALINK);
+    }
+}
+
+function set_query_vars($vars){
+
+    $page = $vars["page"];
+    $name = $vars["name"];
+
+    if($name == "sso/login"){
+
+        $vars['login_type'] = 'salesforce';
+    }
+
+    return $vars;
+}
+
+function show_login(){
+
+    get_query_var("login2");
+    include(MY_PLUGIN_DIR . 'templates/alternate-login.tpl.php');
+    exit;
+}
+
 
 function salesforce_connect($flow = "usernamepassword")
 {
