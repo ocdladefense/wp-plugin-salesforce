@@ -4,9 +4,6 @@
  * @package SalesforcePlugin
  */
 
-use Salesforce\OAuthRequest;
-use Salesforce\RestApiRequest;
-
 /*
 Plugin Name: Salesforce Plugin
 Plugin URI: 
@@ -36,16 +33,6 @@ add_filter('template_include',"setting_template");
 
 add_filter('init','flush_rules'); 
 
-//require MY_PLUGIN_DIR . "/includes/rewrite.inc";
+add_action( 'init', 'process_oauth_redirect_uri' );
 
-//add_action( 'init', 'process_oauth_redirect_uri' );
-
-//add_action('init', 'add_urls');
-
-//add_filter('request', 'set_query_vars');
-
-//add_action('template_redirect', 'show_login');
-
-//add_action( 'init', 'add_rule' );
-
-//add_filter( 'query_vars', 'wpse26388_query_vars' );
+add_action('wp_logout','auto_redirect_after_logout');

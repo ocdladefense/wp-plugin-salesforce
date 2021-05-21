@@ -1,5 +1,8 @@
 <?php
 
+use Salesforce\OAuthRequest;
+use Salesforce\RestApiRequest;
+
 function process_oauth_redirect_uri() {
 
     $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
@@ -27,11 +30,11 @@ function process_oauth_redirect_uri() {
         // Get the salesforce user's "preferred username" from the "user info".
         $username = getWpCompliantUsername($sf_userInfo["preferred_username"]);
 
+
         // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
         if(!username_exists($username)){
 
-            $isAdministrator = $sf_userInfo["user_type"] == "STANDARD"; // Need a better way to determine the role.
-            $role = $isAdministrator ? "administrator" : "subscriber";  // Salesforce sets "user_type" to "STANDARD" for admin and customer users? 
+            $role = wp_get_role_by_profile($sf_userInfo);
 
             $params = array(
                 "role"          => $role,
@@ -49,6 +52,38 @@ function process_oauth_redirect_uri() {
 
         user_login($username);
     }
+}
+
+function wp_get_role_by_user_type($user) {
+
+    $userTypes = array(
+        "Standard"                   => "STANDARD",
+        "Partner"                    => "POWERPARTNER",
+        "High Volume Portal"         => "CSPLITEPORTAL",
+        "Customer Portal User"       => "CUSTOMERSUCCESS",
+        "Customer Portal Manager"    => "POWERCUSTOMERSUCCESS",
+        "Chatter Free"               => "CSNONLY"
+    );
+
+    $adminUserTypes = array("Standard");
+
+    $userType = strtoupper($user["user_type"]);
+
+    return in_array($userType, $adminUserTypes) ? "administrator" : "subscriber";
+
+}
+
+function wp_get_role_by_profile($user) {
+
+    $userId = $user["user_id"];
+
+    $user = $req->query("SELECT Profile.Name FROM User WHERE Id = '$userId'")->getRecord();
+
+    $sf_userProfile = $user["Profile"]["Name"];
+
+    $isAdministrator = $sf_userProfile == "System Administrator";    
+
+    return $isAdministrator ? "administrator" : "subscriber";
 }
 
 
@@ -126,4 +161,10 @@ function salesforce_oauth_url_customer(){
 
     $body = http_build_query($body);
     return $auth_url."?".$body;
+}
+
+function auto_redirect_after_logout() {
+
+    wp_safe_redirect( home_url() );
+    exit;
 }
