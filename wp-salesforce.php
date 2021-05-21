@@ -28,6 +28,14 @@ require MY_PLUGIN_DIR . "/includes/config.inc";
 require MY_PLUGIN_DIR . "/includes/oauth.inc";
 require MY_PLUGIN_DIR . "/includes/redirect.inc";
 
+add_action( 'init', "add_urls" );
+
+add_filter('request',"query_vars");
+
+add_filter('template_include',"setting_template");
+
+add_filter('init','flushRules'); 
+
 //require MY_PLUGIN_DIR . "/includes/rewrite.inc";
 
 //add_action( 'init', 'process_oauth_redirect_uri' );

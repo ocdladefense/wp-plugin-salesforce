@@ -1,13 +1,5 @@
 <?php
 
-add_action( 'init', "add_urls" );
-
-add_filter('request',"query_vars");
-
-add_filter('template_include',"setting_template");
-
-add_filter('init','flushRules'); 
-
 function flushRules() { 
 
     global $wp_rewrite; 
