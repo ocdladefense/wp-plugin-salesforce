@@ -1,28 +1,16 @@
 <?php
 
 
-function add_rule(){
-    add_rewrite_rule(
-        'sso/([0-9]+)/?$',
-        'index.php?pagename=sso&type=$matches[1]',
-        'top' 
-    );
+function add_rule() {
+
+    add_rewrite_rule('sso/([0-9]+)/?$', 'index.php?pagename=sso&type=$matches[1]', 'top');
 }
 
-function wpse26388_query_vars( $query_vars ){
+function query_vars($query_vars) {
+
     $query_vars[] = 'property_id';
     return $query_vars;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 // Show the alternate login screen
@@ -37,7 +25,6 @@ function user_form_template() {
 }
 
 
-
 function add_urls() {
 
     $urls = array("sso/login");
@@ -48,7 +35,7 @@ function add_urls() {
     }
 }
 
-function set_query_vars($vars){
+function set_query_vars($vars) {
 
     $page = $vars["page"];
     $name = $vars["name"];
@@ -68,20 +55,18 @@ function show_login(){
     exit;
 }
 
+function add_page_template($templates) {
 
-
-function add_page_template($templates)
-{
     $templates[MY_PLUGIN_DIR . 'templates/test-tpl.php'] = __('Template from plugin', 'text-domain');
     return $templates;
 }
 
+function include_page_template($template) {
 
-function include_page_template($template)
-{
     $newTemplate = MY_PLUGIN_DIR . '/templates/test-tpl.php';
 
     if (file_exists($newTemplate)) {
+
         return $newTemplate;
     }
 

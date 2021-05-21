@@ -27,15 +27,16 @@ define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 require MY_PLUGIN_DIR . "/includes/config.inc";
 require MY_PLUGIN_DIR . "/includes/oauth.inc";
 require MY_PLUGIN_DIR . "/includes/redirect.inc";
-require MY_PLUGIN_DIR . "/includes/rewrite.inc";
 
-// add_action( 'init', 'process_oauth_redirect_uri' );
+//require MY_PLUGIN_DIR . "/includes/rewrite.inc";
 
-// add_action('init', 'add_urls');
+//add_action( 'init', 'process_oauth_redirect_uri' );
 
-// add_filter('request', 'set_query_vars');
+//add_action('init', 'add_urls');
 
-// add_action('template_redirect', 'show_login');
+//add_filter('request', 'set_query_vars');
+
+//add_action('template_redirect', 'show_login');
 
 //add_action( 'init', 'add_rule' );
 

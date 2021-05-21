@@ -66,9 +66,6 @@ function getWpCompliantUsername($username) {
     return $complientName;
 }
 
-
-
-
 function user_login($username) {
 
     $user = get_user_by('login', $username);
