@@ -34,7 +34,7 @@ add_filter('request',"query_vars");
 
 add_filter('template_include',"setting_template");
 
-add_filter('init','flushRules'); 
+add_filter('init','flush_rules'); 
 
 //require MY_PLUGIN_DIR . "/includes/rewrite.inc";
 
