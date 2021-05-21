@@ -34,7 +34,7 @@ function process_oauth_redirect_uri() {
         // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
         if(!username_exists($username)){
 
-            $role = wp_get_role_by_profile($sf_userInfo);
+            $role = wp_get_role_by_user_type($sf_userInfo);
 
             $params = array(
                 "role"          => $role,
@@ -56,20 +56,25 @@ function process_oauth_redirect_uri() {
 
 function wp_get_role_by_user_type($user) {
 
-    $userTypes = array(
-        "Standard"                   => "STANDARD",
-        "Partner"                    => "POWERPARTNER",
-        "High Volume Portal"         => "CSPLITEPORTAL",
-        "Customer Portal User"       => "CUSTOMERSUCCESS",
-        "Customer Portal Manager"    => "POWERCUSTOMERSUCCESS",
-        "Chatter Free"               => "CSNONLY"
+    $otherUserTypes = array(
+        "PowerPartner"          => "Partner",
+        "CSPLitePortal"         => "High Volume Portal",
+        "CustomerSuccess"       => "Customer Portal User",
+        "PowerCustomerSuccess"  => "Customer Portal Manager",
+        "CsnOnly"               => "Chatter Free"
     );
 
-    $adminUserTypes = array("Standard");
+    $adminUserTypes = array("Standard" => "Standard");
 
-    $userType = strtoupper($user["user_type"]);
+    $upperCaseAdminUserTypes = array();
+    foreach($adminUserTypes as $key => $type) {
 
-    return in_array($userType, $adminUserTypes) ? "administrator" : "subscriber";
+        $upperCaseAdminUserTypes[strtoupper($key)] = $type;
+    }
+
+    $userType = $user["user_type"];
+
+    return in_array($userType, $upperCaseAdminUserTypes) ? "administrator" : "subscriber";
 
 }
 
@@ -91,14 +96,14 @@ function getWpCompliantUsername($username) {
 
     $nameParts = explode(".", $username);
 
-    $complientName = $nameParts[0] . "." . $nameParts[1];
+    $compliantName = $nameParts[0] . "." . $nameParts[1];
 
     for($i = 2; $i < count($nameParts); $i++) {
 
-        $complientName = $complientName . $nameParts[$i];
+        $compliantName = $compliantName . $nameParts[$i];
     }
 
-    return $complientName;
+    return $compliantName;
 }
 
 function user_login($username) {
