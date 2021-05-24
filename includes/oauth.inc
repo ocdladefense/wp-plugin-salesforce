@@ -130,3 +130,51 @@ function auto_redirect_after_logout() {
     wp_safe_redirect( home_url() );
     exit;
 }
+
+
+
+
+
+function salesforce_oauth_url_admin(){
+
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
+
+function salesforce_oauth_url_customer(){
+    
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
