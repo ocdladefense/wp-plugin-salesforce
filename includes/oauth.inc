@@ -2,7 +2,7 @@
 
 use Salesforce\OAuthRequest;
 use Salesforce\RestApiRequest;
-
+use Salesforce\OAuth;
 
 
 
@@ -16,14 +16,12 @@ function process_oauth_redirect_uri() {
 
 
 	// Get an "OAuthConfig" object for a given connected app configuration array
-	$configArray = getConfig("wp-admin");
+	$configArray = getConfig("ocdla-admin");
 	$config = new OAuthConfig($configArray);
 	$config->setAuthorizationCode($_GET["code"]);
 
 	// Get an access token and an instance url from the "OAuthResponse".
 	$oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
-	
-	var_dump($oauth);exit;
 	
 	
 	$resp = $oauth->authorize();
@@ -74,9 +72,40 @@ function process_oauth_redirect_uri() {
 	user_login($username);
 }
 
+function salesforce_oauth_url_admin(){
+
+    $configArray = getConfig("ocdla-admin");
+	$config = new OAuthConfig($configArray);
+
+    $resp = OAuth::start($config, "webserver");
+
+    $header = $resp->getHeader("Location");
+
+    $url = $header->getValue();
+
+    return $url;
 
 
 
+    // $clientId = $config->getClientId();
+    // $clientSecret = $config->getClientSecret();
+    // $flowConfig = $config->getFlowConfig("webserver");
+    // $auth_url = $flowConfig->getAuthorizationUrl();
+
+
+    // $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    // $body = array(
+    //     "client_id"		=> $clientId,
+    //     "redirect_uri"	=> $flowConfig->get,
+    //     "response_type" => "code",
+    //     "state"         => json_encode($state)
+    // );
+
+
+    // $body = http_build_query($body);
+    // return $auth_url."?".$body;
+}
 
 
 function wp_get_role_by_user_type($user) {
@@ -102,10 +131,6 @@ function wp_get_role_by_user_type($user) {
     return in_array($userType, $upperCaseAdminUserTypes) ? "administrator" : "subscriber";
 
 }
-
-
-
-
 
 
 function wp_get_role_by_profile($user) {
