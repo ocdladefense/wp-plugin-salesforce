@@ -134,7 +134,7 @@ function auto_redirect_after_logout() {
 
 
 
-
+if(!function_exists("salesforce_oauth_url_admin")) {
 function salesforce_oauth_url_admin(){
 
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
@@ -156,7 +156,10 @@ function salesforce_oauth_url_admin(){
     $body = http_build_query($body);
     return $auth_url."?".$body;
 }
+}
 
+
+if(!function_exists("salesforce_oauth_url_customer")) {
 function salesforce_oauth_url_customer(){
     
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
@@ -178,3 +181,7 @@ function salesforce_oauth_url_customer(){
     $body = http_build_query($body);
     return $auth_url."?".$body;
 }
+
+}
+
+

@@ -8,8 +8,7 @@
 function getConfig($configName){
     
     $configs = array(
-        "wp-admin" => array(
-            //"highscope-sandbox-2.0--webserver--user" 
+        "wp-admin" => array( 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
             "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
@@ -19,9 +18,9 @@ function getConfig($configName){
                 "oauth" => array(
                     "usernamepassword" => array(
                         "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "username" => "membernation@ocdla.com.ocdpartial",
-                        "password" => "asdi49ir4",
-                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
+                        "username" => "",
+                        "password" => "",
+                        "security_token" => ""
                     ),
                     "webserver" => array(
                         "token_url" => "https://test.salesforce.com/services/oauth2/token",
@@ -33,7 +32,6 @@ function getConfig($configName){
             )
         ),
         "wp-customer" => array(
-            //"highscope-sandbox-2.0--webserver--user" 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
             "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
@@ -43,9 +41,9 @@ function getConfig($configName){
                 "oauth" => array(
                     "usernamepassword" => array(
                         "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "username" => "membernation@ocdla.com.ocdpartial",
-                        "password" => "asdi49ir4",
-                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
+                        "username" => "",
+                        "password" => "",
+                        "security_token" => ""
                     ),
                     "webserver" => array(
                         "token_url" => "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/token",
