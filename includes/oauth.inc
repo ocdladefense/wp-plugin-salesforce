@@ -3,56 +3,77 @@
 use Salesforce\OAuthRequest;
 use Salesforce\RestApiRequest;
 
+
+
+
+
 function process_oauth_redirect_uri() {
 
-    $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
-    if($request_uri == "/oauth/api/request"){
-
-        // Get an "OAuthConfig" object for a given connected app configuration array
-        $configArray = getConfig("wp-customer");
-        $config = new OAuthConfig($configArray);
-        $config->setAuthorizationCode($_GET["code"]);
-        
-        // Get an access token and an instance url from the "OAuthResponse".
-        $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
-        $oauthResponse = $oauth->authorize();
-        
-        $accessToken = $oauthResponse->getAccessToken();
-        $instanceUrl = $oauthResponse->getInstanceUrl();
-
-        // Get the salesforce "user info" for the current user.
-		$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
-		$req = new RestApiRequest($instanceUrl, $accessToken);
-		$resp = $req->send($userInfoEndpoint);
-
-		$sf_userInfo = $resp->getBody();
-
-        // Get the salesforce user's "preferred username" from the "user info".
-        $username = getWpCompliantUsername($sf_userInfo["preferred_username"]);
+	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
+	
+	if($request_uri != "/oauth/api/request") return;
 
 
-        // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
-        if(!username_exists($username)){
 
-            $role = wp_get_role_by_user_type($sf_userInfo);
+	// Get an "OAuthConfig" object for a given connected app configuration array
+	$configArray = getConfig("wp-admin");
+	$config = new OAuthConfig($configArray);
+	$config->setAuthorizationCode($_GET["code"]);
 
-            $params = array(
-                "role"          => $role,
-                "user_login"    => $username,
-                "first_name"    => $sf_userInfo["given_name"],
-                "last_name"     => $sf_userInfo["family_name"],
-                "user_email"    => $sf_userInfo["email"]
-            );
+	// Get an access token and an instance url from the "OAuthResponse".
+	$oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
+	$resp = $oauth->authorize();
 
-            $wp_userId = wp_insert_user($params);
 
-            // Need to find out what this email looks like?  
-            wp_new_user_notification($wp_userId, "user");
-        }
+	if(!$resp->success()) {
+		var_dump($resp);
+		exit;
+	}
 
-        user_login($username);
-    }
+	$accessToken = $oauthResponse->getAccessToken();
+	$instanceUrl = $oauthResponse->getInstanceUrl();
+
+
+
+	// Get the salesforce "user info" for the current user.
+	$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
+	$req = new RestApiRequest($instanceUrl, $accessToken);
+	$resp = $req->send($userInfoEndpoint);
+
+	$sf_userInfo = $resp->getBody();
+
+
+	// Get the salesforce user's "preferred username" from the "user info".
+	$username = getWpCompliantUsername($sf_userInfo["preferred_username"]);
+
+
+	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
+	if(!username_exists($username)){
+
+			$role = wp_get_role_by_user_type($sf_userInfo);
+
+			$params = array(
+					"role"          => $role,
+					"user_login"    => $username,
+					"first_name"    => $sf_userInfo["given_name"],
+					"last_name"     => $sf_userInfo["family_name"],
+					"user_email"    => $sf_userInfo["email"]
+			);
+
+			$wp_userId = wp_insert_user($params);
+
+			// Need to find out what this email looks like?  
+			wp_new_user_notification($wp_userId, "user");
+	}
+
+
+	user_login($username);
 }
+
+
+
+
+
 
 function wp_get_role_by_user_type($user) {
 
@@ -78,6 +99,11 @@ function wp_get_role_by_user_type($user) {
 
 }
 
+
+
+
+
+
 function wp_get_role_by_profile($user) {
 
     $userId = $user["user_id"];
@@ -90,6 +116,8 @@ function wp_get_role_by_profile($user) {
 
     return $isAdministrator ? "administrator" : "subscriber";
 }
+
+
 
 
 function getWpCompliantUsername($username) {
@@ -105,6 +133,9 @@ function getWpCompliantUsername($username) {
 
     return $compliantName;
 }
+
+
+
 
 function user_login($username) {
 
@@ -123,6 +154,8 @@ function user_login($username) {
         throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
     }
 }
+
+
 
 
 function auto_redirect_after_logout() {
