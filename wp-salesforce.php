@@ -18,12 +18,16 @@ Text Domain: wp-salesforce-plugin
 // If this file is accessed directly, abort.
 defined('ABSPATH') or die('You shall not pass!');
 
+
+
 // Setting a CONSTANT for the plugin dir path
 define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
-require MY_PLUGIN_DIR . "/includes/config.inc";
+include WP_CONTENT_DIR . "/oauth-config.php";
 require MY_PLUGIN_DIR . "/includes/oauth.inc";
 require MY_PLUGIN_DIR . "/includes/redirect.inc";
+
+
 
 add_action( 'init', "add_urls" );
 

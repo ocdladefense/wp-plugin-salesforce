@@ -3,7 +3,7 @@
 function add_urls() {
 
     //may not be able to use compount paths as parameters to add_rewrite_endpoint
-	add_rewrite_rule( '^sso-login/?', 'index.php?sso-login=sso-login', 'top' );
+		add_rewrite_rule( '^sso-login/?', 'index.php?sso-login=sso-login', 'top' );
     add_rewrite_endpoint( 'sso-login', EP_PERMALINK);
 }
 

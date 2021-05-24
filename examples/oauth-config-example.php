@@ -1,9 +1,14 @@
 <?php
 
+/**
+ * Change the name of this file and place it in wp-content/
+ */
+
+
 function getConfig($configName){
     
     $configs = array(
-        "ocdla-sandbox-admin" => array(
+        "wp-admin" => array(
             //"highscope-sandbox-2.0--webserver--user" 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
@@ -27,7 +32,7 @@ function getConfig($configName){
                 )
             )
         ),
-        "ocdla-sandbox-customer" => array(
+        "wp-customer" => array(
             //"highscope-sandbox-2.0--webserver--user" 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
