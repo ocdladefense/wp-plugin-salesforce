@@ -1,14 +1,8 @@
 <?php
 
-
 /**
  * @package SalesforcePlugin
  */
-
-use Salesforce\OAuthRequest;
-use Salesforce\RestApiRequest;
-use Salesforce\RestApiResponse;
-
 /*
 Plugin Name: Salesforce Plugin
 Plugin URI: 
@@ -19,6 +13,12 @@ Author URI: https://www.ocdla.org/
 License: GPLv2 or later
 Text Domain: wp-salesforce-plugin
 */
+
+use Salesforce\OAuthRequest;
+use Salesforce\RestApiRequest;
+use Salesforce\RestApiResponse;
+
+
 
 // If this file is accessed directly, abort.
 defined('ABSPATH') or die('You shall not pass!');
@@ -47,7 +47,7 @@ define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
 //return $template;
 //}
 
-function get_committee_records()
+function load_api()
 {
     $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
     $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
@@ -85,18 +85,8 @@ function get_committee_records()
 
     $api = new RestApiRequest($resp->getInstanceUrl(), $resp->getAccessToken());
 
-    // List commiittees and related contact info for each member
-    $resp = $api->query("SELECT id, Name, (SELECT Contact__r.Id, Contact__r.Title, Contact__r.Name, Role__c, Contact__r.Ocdla_Home_City__c, Contact__r.Email, Contact__r.Phone FROM Relationships__r) FROM Committee__c");
-
-    if (!$resp->isSuccess()) {
-
-        var_dump($resp);
-        exit;
-    }
-
-    $committeeRecords = $resp->getRecords();
-
-    return $committeeRecords;
+    return $api;
 }
-add_action('connect_and_query', 'get_committee_records');
+
+add_action('connect_and_query', 'get_records');
 //add_action('wp_loaded', 'get_committee_records');
