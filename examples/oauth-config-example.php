@@ -1,10 +1,14 @@
 <?php
 
+/**
+ * Change the name of this file and place it in wp-content/
+ */
+
+
 function getConfig($configName){
     
     $configs = array(
-        "ocdla-sandbox-admin" => array(
-            //"highscope-sandbox-2.0--webserver--user" 
+        "wp-admin" => array( 
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
             "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
@@ -14,9 +18,9 @@ function getConfig($configName){
                 "oauth" => array(
                     "usernamepassword" => array(
                         "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "username" => "membernation@ocdla.com.ocdpartial",
-                        "password" => "asdi49ir4",
-                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
+                        "username" => "",
+                        "password" => "",
+                        "security_token" => ""
                     ),
                     "webserver" => array(
                         "token_url" => "https://test.salesforce.com/services/oauth2/token",
@@ -27,8 +31,7 @@ function getConfig($configName){
                 )
             )
         ),
-        "ocdla-sandbox-customer" => array(
-            //"highscope-sandbox-2.0--webserver--user" 
+        "wp-customer" => array(
             "default" => true,
             "sandbox" => true, // Might be used to determine domain for urls
             "client_id" => "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2",
@@ -38,9 +41,9 @@ function getConfig($configName){
                 "oauth" => array(
                     "usernamepassword" => array(
                         "token_url" => "https://ltdglobal-customer.cs197.force.com/services/oauth2/token",
-                        "username" => "membernation@ocdla.com.ocdpartial",
-                        "password" => "asdi49ir4",
-                        "security_token" => "mT4ZN6OQmoF9SSZmx830AtpEM"
+                        "username" => "",
+                        "password" => "",
+                        "security_token" => ""
                     ),
                     "webserver" => array(
                         "token_url" => "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/token",
@@ -55,4 +58,62 @@ function getConfig($configName){
     );
 
     return $configs[$configName];
+}
+
+
+
+
+
+
+
+if(!function_exists("salesforce_oauth_url_admin")) {
+
+	print "Hello world!";exit;
+function salesforce_oauth_url_admin(){
+
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
+}
+
+
+if(!function_exists("salesforce_oauth_url_customer")) {
+function salesforce_oauth_url_customer(){
+    
+    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
+    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
+    $auth_url = "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/authorize";
+
+
+    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+
+    $body = array(
+        "client_id"		=> $clientId,
+        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
+        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
+        "response_type" => "code",
+        "state"         => json_encode($state)
+    );
+
+
+    $body = http_build_query($body);
+    return $auth_url."?".$body;
+}
+
 }

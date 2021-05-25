@@ -2,57 +2,137 @@
 
 use Salesforce\OAuthRequest;
 use Salesforce\RestApiRequest;
+use Salesforce\OAuth;
+
+
+
 
 function process_oauth_redirect_uri() {
 
-    $request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
-    if($request_uri == "/ocdla-prod/my-account"){
+	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
+	
+	if($request_uri != "/ocdla-prod/sso-callback") return;
 
-        // Get an "OAuthConfig" object for a given connected app configuration array
-        $configArray = getConfig("ocdla-sandbox-customer");
-        $config = new OAuthConfig($configArray);
-        $config->setAuthorizationCode($_GET["code"]);
-        
-        // Get an access token and an instance url from the "OAuthResponse".
-        $oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
-        $oauthResponse = $oauth->authorize();
-        
-        $accessToken = $oauthResponse->getAccessToken();
-        $instanceUrl = $oauthResponse->getInstanceUrl();
+    $queryString = $_SERVER["QUERY_STRING"];
 
-        // Get the salesforce "user info" for the current user.
-		$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
-		$req = new RestApiRequest($instanceUrl, $accessToken);
-		$resp = $req->send($userInfoEndpoint);
+    
 
-		$sf_userInfo = $resp->getBody();
+    $decoded = urldecode($queryString);
 
-        // Get the salesforce user's "preferred username" from the "user info".
-        $username = getWpCompliantUsername($sf_userInfo["preferred_username"]);
+    $parsed = parse_str($decoded, $result);
+
+    $state = $result["state"];
+
+    $stateDecoded = json_decode($state);
+    var_dump($stateDecoded);
+    exit;
 
 
-        // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
-        if(!username_exists($username)){
+	// Get an "OAuthConfig" object for a given connected app configuration array
+	$config = get_oauth_config();
+	$config->setAuthorizationCode($_GET["code"]);
+    $stateReg = $_GET["state"];
+    $stateDecoded = urldecode($stateReg);
+    $state = json_decode($stateDecoded);
+    var_dump($stateReg, $stateDecoded, $state);exit;
 
-            $role = wp_get_role_by_user_type($sf_userInfo);
+    var_dump($state);exit;
 
-            $params = array(
-                "role"          => $role,
-                "user_login"    => $username,
-                "first_name"    => $sf_userInfo["given_name"],
-                "last_name"     => $sf_userInfo["family_name"],
-                "user_email"    => $sf_userInfo["email"]
-            );
+    $domain = $state["domain"];
 
-            $wp_userId = wp_insert_user($params);
+    $flowConfig = OAuthConfig::parseFlowConfig("webserver", $domain);
 
-            // Need to find out what this email looks like?  
-            wp_new_user_notification($wp_userId, "user");
-        }
+    $state2 = json_decode('{"connected_app_name":"ocdla-admin","flow":"webserver","domain":"https:\\/\\/test.salesforce.com"}');
 
-        user_login($username);
-    }
+    var_dump($flowConfig, $domain, $state, $_GET, $_GET["code"], $_GET["state"], $state2);exit;
+
+    $flow = $config->getFlowConfig("webserver", $domain);
+
+
+
+    
+
+
+	// Get an access token and an instance url from the "OAuthResponse".
+	$oauth = OAuthRequest::newAccessTokenRequest($config, $flow);
+	
+	
+	$resp = $oauth->authorize();
+
+
+	if(!$resp->success()) {
+		var_dump($resp);
+		exit;
+	}
+
+	$accessToken = $resp->getAccessToken();
+	$instanceUrl = $resp->getInstanceUrl();
+
+
+
+	// Get the salesforce "user info" for the current user.
+	$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
+	$req = new RestApiRequest($instanceUrl, $accessToken);
+	$resp = $req->send($userInfoEndpoint);
+
+	$sf_userInfo = $resp->getBody();
+
+
+	// Get the salesforce user's "preferred username" from the "user info".
+	$username = getWpCompliantUsername($sf_userInfo["preferred_username"]);
+
+
+	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
+	if(!username_exists($username)){
+
+			$role = wp_get_role_by_user_type($sf_userInfo);
+
+			$params = array(
+					"role"          => $role,
+					"user_login"    => $username,
+					"first_name"    => $sf_userInfo["given_name"],
+					"last_name"     => $sf_userInfo["family_name"],
+					"user_email"    => $sf_userInfo["email"]
+			);
+
+			$wp_userId = wp_insert_user($params);
+
+			// Need to find out what this email looks like?  
+			wp_new_user_notification($wp_userId, "user");
+	}
+
+
+	user_login($username);
+
+    auto_redirect_after_logout();
 }
+
+function salesforce_oauth_url_admin(){
+
+	$config = get_oauth_config();
+
+    $resp = OAuth::start($config, "webserver", SALESFORCE_DOMAIN);
+
+    $header = $resp->getHeader("Location");
+
+    $url = $header->getValue();
+
+    return $url;
+}
+
+function salesforce_oauth_url_customer(){
+
+	$config = get_oauth_config();
+
+    $resp = OAuth::start($config, "webserver", SALESFORCE_COMMUNITY_DOMAIN);
+
+    $header = $resp->getHeader("Location");
+
+    $url = $header->getValue();
+
+    return $url;
+}
+
 
 function wp_get_role_by_user_type($user) {
 
@@ -78,6 +158,7 @@ function wp_get_role_by_user_type($user) {
 
 }
 
+
 function wp_get_role_by_profile($user) {
 
     $userId = $user["user_id"];
@@ -90,6 +171,8 @@ function wp_get_role_by_profile($user) {
 
     return $isAdministrator ? "administrator" : "subscriber";
 }
+
+
 
 
 function getWpCompliantUsername($username) {
@@ -105,6 +188,9 @@ function getWpCompliantUsername($username) {
 
     return $compliantName;
 }
+
+
+
 
 function user_login($username) {
 
@@ -124,52 +210,15 @@ function user_login($username) {
     }
 }
 
-function salesforce_oauth_url_admin(){
-
-    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
-    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
-    $auth_url = "https://test.salesforce.com/services/oauth2/authorize";
 
 
-    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
-
-    $body = array(
-        "client_id"		=> $clientId,
-        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
-        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
-        "response_type" => "code",
-        "state"         => json_encode($state)
-    );
-
-
-    $body = http_build_query($body);
-    return $auth_url."?".$body;
-}
-
-function salesforce_oauth_url_customer(){
-    
-    $clientId = "3MVG9gI0ielx8zHLKXlEe15aGYjrfRJ2j60D4kIpoTDqx2YSaK2xqoA3wU77thTRImxT5RSq_obv6EOQaZBm2";
-    $clientSecret = "3B61242366DCD4812DAA4C63A5FDF9C76F619528547B87A950A1584CEAB825E1";
-    $auth_url = "https://ocdpartial-ocdla.cs169.force.com/services/oauth2/authorize";
-
-
-    $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
-
-    $body = array(
-        "client_id"		=> $clientId,
-        //"redirect_uri"	=> "http://localhost/ocdla-prod/oauth/api/request",
-        "redirect_uri"	=> "http://localhost/ocdla-prod/my-account",
-        "response_type" => "code",
-        "state"         => json_encode($state)
-    );
-
-
-    $body = http_build_query($body);
-    return $auth_url."?".$body;
-}
 
 function auto_redirect_after_logout() {
 
     wp_safe_redirect( home_url() );
     exit;
 }
+
+
+
+
