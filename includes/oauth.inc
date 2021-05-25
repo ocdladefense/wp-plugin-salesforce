@@ -11,17 +11,50 @@ function process_oauth_redirect_uri() {
 
 	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
 	
-	if($request_uri != "/oauth/api/request") return;
+	if($request_uri != "/ocdla-prod/sso-callback") return;
 
+    $queryString = $_SERVER["QUERY_STRING"];
+
+    
+
+    $decoded = urldecode($queryString);
+
+    $parsed = parse_str($decoded, $result);
+
+    $state = $result["state"];
+
+    $stateDecoded = json_decode($state);
+    var_dump($stateDecoded);
+    exit;
 
 
 	// Get an "OAuthConfig" object for a given connected app configuration array
-	$configArray = getConfig("ocdla-admin");
-	$config = new OAuthConfig($configArray);
+	$config = get_oauth_config();
 	$config->setAuthorizationCode($_GET["code"]);
+    $stateReg = $_GET["state"];
+    $stateDecoded = urldecode($stateReg);
+    $state = json_decode($stateDecoded);
+    var_dump($stateReg, $stateDecoded, $state);exit;
+
+    var_dump($state);exit;
+
+    $domain = $state["domain"];
+
+    $flowConfig = OAuthConfig::parseFlowConfig("webserver", $domain);
+
+    $state2 = json_decode('{"connected_app_name":"ocdla-admin","flow":"webserver","domain":"https:\\/\\/test.salesforce.com"}');
+
+    var_dump($flowConfig, $domain, $state, $_GET, $_GET["code"], $_GET["state"], $state2);exit;
+
+    $flow = $config->getFlowConfig("webserver", $domain);
+
+
+
+    
+
 
 	// Get an access token and an instance url from the "OAuthResponse".
-	$oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
+	$oauth = OAuthRequest::newAccessTokenRequest($config, $flow);
 	
 	
 	$resp = $oauth->authorize();
@@ -70,41 +103,34 @@ function process_oauth_redirect_uri() {
 
 
 	user_login($username);
+
+    auto_redirect_after_logout();
 }
 
 function salesforce_oauth_url_admin(){
 
-    $configArray = getConfig("ocdla-admin");
-	$config = new OAuthConfig($configArray);
+	$config = get_oauth_config();
 
-    $resp = OAuth::start($config, "webserver");
+    $resp = OAuth::start($config, "webserver", SALESFORCE_DOMAIN);
 
     $header = $resp->getHeader("Location");
 
     $url = $header->getValue();
 
     return $url;
+}
 
+function salesforce_oauth_url_customer(){
 
+	$config = get_oauth_config();
 
-    // $clientId = $config->getClientId();
-    // $clientSecret = $config->getClientSecret();
-    // $flowConfig = $config->getFlowConfig("webserver");
-    // $auth_url = $flowConfig->getAuthorizationUrl();
+    $resp = OAuth::start($config, "webserver", SALESFORCE_COMMUNITY_DOMAIN);
 
+    $header = $resp->getHeader("Location");
 
-    // $state = array("connected_app_name" => "ocdla sandbox", "flow" => "webserver");
+    $url = $header->getValue();
 
-    // $body = array(
-    //     "client_id"		=> $clientId,
-    //     "redirect_uri"	=> $flowConfig->get,
-    //     "response_type" => "code",
-    //     "state"         => json_encode($state)
-    // );
-
-
-    // $body = http_build_query($body);
-    // return $auth_url."?".$body;
+    return $url;
 }
 
 
