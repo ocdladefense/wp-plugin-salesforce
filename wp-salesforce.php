@@ -16,9 +16,6 @@ Text Domain: wp-salesforce-plugin
 
 use Salesforce\OAuthRequest;
 use Salesforce\RestApiRequest;
-use Salesforce\RestApiResponse;
-
-
 
 // If this file is accessed directly, abort.
 defined('ABSPATH') or die('You shall not pass!');
@@ -58,7 +55,7 @@ function load_api()
 
 
     // make a connection to SF
-    $req = new OAuthRequest($tokenUrl); //"https://login.salesforce.com/services/oauth2/token");
+    $req = new OAuthRequest($tokenUrl);
 
     $body = array(
         "grant_type"             => "password",
