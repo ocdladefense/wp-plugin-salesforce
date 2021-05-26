@@ -85,5 +85,5 @@ function load_api()
     return $api;
 }
 
-add_action('connect_and_query', 'get_records');
+add_action('connect_and_query', 'load_api');
 //add_action('wp_loaded', 'get_committee_records');
