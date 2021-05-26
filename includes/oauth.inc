@@ -63,16 +63,7 @@ function process_oauth_redirect_uri() {
 	$accessToken = $resp->getAccessToken();
 	$instanceUrl = $resp->getInstanceUrl();
 
-
-
-	// Get the salesforce "user info" for the current user.
-	$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
-	$req = new RestApiRequest($instanceUrl, $accessToken);
-	$resp = $req->send($userInfoEndpoint);
-
-	$uInfo = $resp->getBody();
-
-
+	$uInfo = get_user_info($instanceUrl,$accessToken);
 	// Get the salesforce user's "preferred username" from the "user info".
 	$username = getWpCompliantUsername($uInfo["preferred_username"]);
 
@@ -163,6 +154,15 @@ function user_login($uInfo) {
     return is_user_logged_in();
 }
 
+function get_user_info($instanceUrl,$accessToken){
+	// Get the salesforce "user info" for the current user.
+	$userInfoEndpoint = "/services/oauth2/userinfo?access_token={$accessToken}";
+	$req = new RestApiRequest($instanceUrl, $accessToken);
+	$resp = $req->send($userInfoEndpoint);
+
+	$uInfo = $resp->getBody();
+    return $uInfo;
+}
 
 
 
