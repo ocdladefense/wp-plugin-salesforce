@@ -106,17 +106,16 @@ function process_oauth_redirect_uri() {
         }
 	}
 
-
-	$did_it_work = user_login($uInfo["email"]);
+	$did_it_work = user_login($uInfo);
 	
 	if(!$did_it_work) {
 
         throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
 
-    } else {
+    } 
 
-        wp_safe_redirect( home_url() );
-	}
+    wp_safe_redirect( home_url() );
+    exit;
 }
 
 
@@ -129,7 +128,7 @@ function user_already_exists($data) {
     if(!$userId) {
 
         $user = get_user_by("email", $data["email"]);
-        $userId = $user->data->ID;
+        $userId = !empty($user->data->ID) ? $user->data->ID : false;
     }
 
 	return $userId;
@@ -138,18 +137,29 @@ function user_already_exists($data) {
 
 
 
-function user_login($email) {
+function user_login($uInfo) {
 
 
-    $user = get_user_by('email', $email);
+    $user = get_user_by('email', $uInfo["email"]);
+    if(!$user){
+        $user = get_user_by('login', $uInfo["wp_complient_username"]);
+    }
 
-		
-    if(is_wp_error($user)) return false;
-
-    wp_clear_auth_cookie();
-    wp_set_current_user ( $user->ID );
-    wp_set_auth_cookie  ( $user->ID );
     
+		
+    if(is_wp_error($user)){
+        throw new Exception(get_error_message());
+        return false;
+    }
+
+
+    if($user != false){
+
+        wp_clear_auth_cookie();
+        wp_set_current_user ( $user->ID );
+        wp_set_auth_cookie  ( $user->ID );
+    }    
+
     return is_user_logged_in();
 }
 
