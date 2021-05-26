@@ -6,52 +6,43 @@ use Salesforce\OAuth;
 
 
 
+function get_querystring_value($key) {
+
+	$queryString = $_SERVER["QUERY_STRING"];
+
+	$decoded = urldecode($queryString);
+
+	$parsed = parse_str($decoded, $result);
+
+	$state = $result[$key];
+
+	$stateDecoded = json_decode($state);
+	
+	return $stateDecoded;
+}
+
+
+
 
 function process_oauth_redirect_uri() {
 
 	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
 	
-	if($request_uri != "/ocdla-prod/sso-callback") return;
+	if($request_uri != "/sso-callback") return;
 
-    $queryString = $_SERVER["QUERY_STRING"];
-
-    
-
-    $decoded = urldecode($queryString);
-
-    $parsed = parse_str($decoded, $result);
-
-    $state = $result["state"];
-
-    $stateDecoded = json_decode($state);
-    var_dump($stateDecoded);
-    exit;
+	$state = get_querystring_value("state");
 
 
 	// Get an "OAuthConfig" object for a given connected app configuration array
 	$config = get_oauth_config();
 	$config->setAuthorizationCode($_GET["code"]);
-    $stateReg = $_GET["state"];
-    $stateDecoded = urldecode($stateReg);
-    $state = json_decode($stateDecoded);
-    var_dump($stateReg, $stateDecoded, $state);exit;
-
-    var_dump($state);exit;
-
-    $domain = $state["domain"];
-
-    $flowConfig = OAuthConfig::parseFlowConfig("webserver", $domain);
-
-    $state2 = json_decode('{"connected_app_name":"ocdla-admin","flow":"webserver","domain":"https:\\/\\/test.salesforce.com"}');
-
-    var_dump($flowConfig, $domain, $state, $_GET, $_GET["code"], $_GET["state"], $state2);exit;
-
-    $flow = $config->getFlowConfig("webserver", $domain);
 
 
+	$domain = $state->domain;
 
-    
+	$flowConfig = OAuthConfig::parseFlowConfig("webserver", $domain);
 
+	$flow = $config->getFlowConfig("webserver", $domain);
 
 	// Get an access token and an instance url from the "OAuthResponse".
 	$oauth = OAuthRequest::newAccessTokenRequest($config, $flow);
@@ -104,12 +95,15 @@ function process_oauth_redirect_uri() {
 
 	user_login($username);
 
-    auto_redirect_after_logout();
+	auto_redirect_after_logout();
 }
+
+
+
 
 function salesforce_oauth_url_admin(){
 
-	$config = get_oauth_config();
+		$config = get_oauth_config();
 
     $resp = OAuth::start($config, "webserver", SALESFORCE_DOMAIN);
 
@@ -120,9 +114,11 @@ function salesforce_oauth_url_admin(){
     return $url;
 }
 
+
+
 function salesforce_oauth_url_customer(){
 
-	$config = get_oauth_config();
+		$config = get_oauth_config();
 
     $resp = OAuth::start($config, "webserver", SALESFORCE_COMMUNITY_DOMAIN);
 
