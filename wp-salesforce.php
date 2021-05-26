@@ -44,12 +44,3 @@ add_action( 'init', 'process_oauth_redirect_uri' );
 
 add_action('wp_logout','auto_redirect_after_logout');
 
-
-
-// $thething = "%7B%22connected_app_name%22%3A%22ocdla-admin%22%2C%22flow%22%3A%22webserver%22%2C%22domain%22%3A%22https%3A%5C%2F%5C%2Ftest.salesforce.com%22%7D";
-
-// $decoded = urldecode($thething);
-
-// $regular = json_decode($decoded);
-
-// var_dump($regular);exit;
