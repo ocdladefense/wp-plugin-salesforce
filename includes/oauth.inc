@@ -4,7 +4,7 @@ use Salesforce\OAuthRequest;
 use Salesforce\RestApiRequest;
 use Salesforce\OAuth;
 
-
+define("DOMAIN", $_SERVER["CONTEXT_PREFIX"]);
 
 function get_querystring_value($key) {
 
@@ -30,8 +30,8 @@ function process_oauth_redirect_uri() {
 	
 	// Has to be able to figure out $request_uri when WordPress is installed in a "subdirectory".
 	// E.g., when $request_uri == "/ocdla-prod/sso-callback".
-	define('SOME_CONSTANT', '');
-	if($request_uri != SOME_CONSTANT . "/sso-callback") return;
+
+	if($request_uri != DOMAIN . "/sso-callback") return;
 
 	$state = get_querystring_value("state");
 
@@ -83,72 +83,74 @@ function process_oauth_redirect_uri() {
 	//  Need to check if email is already associated with a user.
 	  // If it is, we need to get that WordPress user's ID.
 	  
-	  
-	if(!username_exists($username)){
+	$uInfo["wp_complient_name"] = $username;
 
-			$role = wp_get_role_by_user_type($uInfo["user_type"]);
+	if(!user_already_exists($uInfo)){
 
-			$params = array(
-					"role"          => $role,
-					"user_login"    => $username,
-					"first_name"    => $uInfo["given_name"],
-					"last_name"     => $uInfo["family_name"],
-					"user_email"    => $uInfo["email"]
-			);
+        $role = wp_get_role_by_user_type($uInfo["user_type"]);
 
-			
-			$userId = wp_insert_user($params);
-			
-			if(is_wp_error($userId)) {
-				throw new Exception("Email address is already in use by WordPress.");
-			}
-			
+        $params = array(
+                "role"          => $role,
+                "user_login"    => $username,
+                "first_name"    => $uInfo["given_name"],
+                "last_name"     => $uInfo["family_name"],
+                "user_email"    => $uInfo["email"]
+        );
 
-			
-			// var_dump($userId);exit;
-			// Need to find out what this email looks like?  
-			// wp_new_user_notification($wp_userId, "user");
+        
+        $userId = wp_insert_user($params);
+        
+        if(is_wp_error($userId)) {
+
+            throw new Exception("Email address is already in use by WordPress.");
+        }
 	}
 
 
-	$did_it_work = user_login($username);
+	$did_it_work = user_login($uInfo["email"]);
 	
 	if(!$did_it_work) {
 
         throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
-    }
-    
-  else {
-	// auto_redirect_after_logout();
+
+    } else {
+
+        wp_safe_redirect( home_url() );
 	}
 }
 
 
 // Figure out how to check for exsiting username AND existing email.
 // If either one exists user insert will fail.
-function check_existing_user($data) {
+function user_already_exists($data) {
 
+    $userId = username_exists($data["wp_complient_username"]);
 
-	return null || $userId;
+    if(!$userId) {
+
+        $user = get_user_by("email", $data["email"]);
+        $userId = $user->data->ID;
+    }
+
+	return $userId;
 }
 
 
 
-function user_login($username) {
+
+function user_login($email) {
 
 
-    $user = get_user_by('login', $username);
+    $user = get_user_by('email', $email);
 
 		
-		if( is_wp_error($user) ) {
-			return false;
-		}
+    if(is_wp_error($user)) return false;
 
-		wp_clear_auth_cookie();
-		wp_set_current_user ( $user->ID );
-		wp_set_auth_cookie  ( $user->ID );
-		
-		return is_user_logged_in();
+    wp_clear_auth_cookie();
+    wp_set_current_user ( $user->ID );
+    wp_set_auth_cookie  ( $user->ID );
+    
+    return is_user_logged_in();
 }
 
 
