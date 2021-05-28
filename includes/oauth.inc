@@ -22,8 +22,6 @@ function get_querystring_value($key) {
 }
 
 
-
-
 function process_oauth_redirect_uri() {
 
 	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
@@ -60,49 +58,41 @@ function process_oauth_redirect_uri() {
 	$accessToken = $resp->getAccessToken();
 	$instanceUrl = $resp->getInstanceUrl();
 
-	$uInfo = get_user_info($instanceUrl,$accessToken);
+	//$uInfo = get_user_info($instanceUrl,$accessToken);
+    $uInfo = getTestUserInfo();
+
 	// Get the salesforce user's "preferred username" from the "user info".
 	$username = getWpCompliantUsername($uInfo["preferred_username"]);
 
 
 	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
-	// 2. If the $uInfo["email"] is already associated with a WordPress user, then this fails.
-	//  Note: this might fail silently (maybe).
-	//  Need to check if email is already associated with a user.
-	  // If it is, we need to get that WordPress user's ID.
 	  
 	$uInfo["wp_complient_name"] = $username;
 
-	if(!user_already_exists($uInfo)){
+    $id = user_already_exists($uInfo) ? user_already_exists($uInfo) : null;
 
-        $role = wp_get_role_by_user_type($uInfo["user_type"]);
+    $role = wp_get_role_by_user_type($uInfo["user_type"]);
 
-        $params = array(
-            "role"          => $role,
-            "user_login"    => $username,
-            "first_name"    => $uInfo["given_name"],
-            "last_name"     => $uInfo["family_name"],
-            "user_email"    => $uInfo["email"]
-        );
+    $params = array(
+        "ID"            => $id,
+        "role"          => $role,
+        "user_login"    => $username,
+        "first_name"    => $uInfo["given_name"],
+        "last_name"     => $uInfo["family_name"],
+        "user_email"    => $uInfo["email"]
+    );
 
-        
-        $userId = wp_insert_user($params);
-        
-        if(is_wp_error($userId)) {
-
-            throw new Exception("INSERT_USER_ERROR: {$userId->get_error_message()}");
-        }
-	}
+    
+    $userId = wp_insert_user($params);
+    
+    if(is_wp_error($userId)) throw new Exception("INSERT_USER_ERROR: {$userId->get_error_message()}");
 
 	$did_it_work = user_login($uInfo);
 	
-	if(!$did_it_work) {
-
-        throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
-
-    } 
+	if(!$did_it_work) throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
 
     wp_safe_redirect( home_url() );
+
     exit;
 }
 
@@ -127,18 +117,14 @@ function user_already_exists($data) {
 
 function user_login($uInfo) {
 
-
     $user = get_user_by('email', $uInfo["email"]);
+
     if(!$user){
+
         $user = get_user_by('login', $uInfo["wp_complient_username"]);
     }
 
-    
-		
-    if(is_wp_error($user)){
-        throw new Exception(get_error_message());
-        return false;
-    }
+    if(is_wp_error($user)) throw new Exception($user->get_error_message());
 
 
     if($user != false){
@@ -218,30 +204,15 @@ function getWpCompliantUsername($username) {
 }
 
 
-
-
-
-
-
-
-
 function auto_redirect_after_logout() {
 
     wp_safe_redirect( home_url() );
     exit;
 }
 
-
-
-
-
-
-
-
-
 function salesforce_oauth_url_admin(){
 
-		$config = get_oauth_config();
+    $config = get_oauth_config();
 
     $resp = OAuth::start($config, "webserver", SALESFORCE_DOMAIN);
 
@@ -256,7 +227,7 @@ function salesforce_oauth_url_admin(){
 
 function salesforce_oauth_url_customer(){
 
-		$config = get_oauth_config();
+    $config = get_oauth_config();
 
     $resp = OAuth::start($config, "webserver", SALESFORCE_COMMUNITY_DOMAIN);
 
@@ -266,3 +237,20 @@ function salesforce_oauth_url_customer(){
 
     return $url;
 }
+
+/////////////////////////////       TESTING CODE        /////////////////////////////////////////////////////////
+
+function getTestUserInfo(){
+
+    $info = array(
+        "user_type" => "STANDARD",
+        "preferred_username" => "trevoruehlinx7",
+        "given_name"            => "Trevor",
+        "family_name"           => "Uehlin",
+        "email"                 => "email@example3.com"
+    );
+
+    return $info;
+}
+
+
