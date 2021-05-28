@@ -81,11 +81,11 @@ function process_oauth_redirect_uri() {
         $role = wp_get_role_by_user_type($uInfo["user_type"]);
 
         $params = array(
-                "role"          => $role,
-                "user_login"    => $username,
-                "first_name"    => $uInfo["given_name"],
-                "last_name"     => $uInfo["family_name"],
-                "user_email"    => $uInfo["email"]
+            "role"          => $role,
+            "user_login"    => $username,
+            "first_name"    => $uInfo["given_name"],
+            "last_name"     => $uInfo["family_name"],
+            "user_email"    => $uInfo["email"]
         );
 
         
@@ -93,7 +93,7 @@ function process_oauth_redirect_uri() {
         
         if(is_wp_error($userId)) {
 
-            throw new Exception("Email address is already in use by WordPress.");
+            throw new Exception("INSERT_USER_ERROR: {$userId->get_error_message()}");
         }
 	}
 
