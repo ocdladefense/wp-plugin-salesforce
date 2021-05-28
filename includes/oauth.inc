@@ -55,10 +55,7 @@ function process_oauth_redirect_uri() {
 	$resp = $oauth->authorize();
 
 
-	if(!$resp->success()) {
-		var_dump($resp);
-		exit;
-	}
+	if(!$resp->success()) throw new Exception("OAUTH_ERROR: {$resp->getErrorMessage()}");
 
 	$accessToken = $resp->getAccessToken();
 	$instanceUrl = $resp->getInstanceUrl();
