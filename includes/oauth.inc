@@ -58,8 +58,8 @@ function process_oauth_redirect_uri() {
 	$accessToken = $resp->getAccessToken();
 	$instanceUrl = $resp->getInstanceUrl();
 
-	//$uInfo = get_user_info($instanceUrl,$accessToken);
-    $uInfo = getTestUserInfo();
+	$uInfo = get_user_info($instanceUrl,$accessToken);
+    //$uInfo = getTestUserInfo();
 
 	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
 	$uInfo["wp_complient_name"] = getWpCompliantUsername($uInfo["preferred_username"]);
