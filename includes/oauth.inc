@@ -56,66 +56,79 @@ function process_oauth_redirect_uri() {
 	$uInfo = get_user_info($instanceUrl,$accessToken);
     //$uInfo = getTestUserInfo();
 
-	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
-	$uInfo["wp_complient_name"] = getWpCompliantUsername($uInfo["preferred_username"]);
+    $salesforceUsername = $uInfo["preferred_username"];
+    $salesforceUserType = $uInfo["user_type"];
+    $salesforceUserEmail = $uInfo["email"];
+    
+	$filteredUsername = getWpCompliantUsername($salesforceUsername);
 
-    $id = user_already_exists($uInfo) ? user_already_exists($uInfo) : null;
+    // If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
+    $existingWpUserId = get_existing_wp_user_id($filteredUsername, $salesforceUserEmail);
 
-    $role = wp_get_role_by_user_type($uInfo["user_type"]);
+    $role = wp_get_role_by_user_type($salesforceUserType);
 
     $params = array(
-        "ID"            => $id,
         "role"          => $role,
-        "user_login"    => $uInfo["wp_complient_name"],
+        "user_login"    => $filteredUsername,
         "first_name"    => $uInfo["given_name"],
         "last_name"     => $uInfo["family_name"],
         "user_email"    => $uInfo["email"]
     );
 
-    
-    $userId = wp_insert_user($params);
-    
-    if(is_wp_error($userId)) throw new Exception("INSERT_USER_ERROR: {$userId->get_error_message()}");
 
-	$did_it_work = user_login($uInfo);
+    if($existingWpUserId == null){
+
+        $result = wp_insert_user($params);
+
+    } else {
+
+        $result = wp_update_existing_user($existingWpUserId, $params);
+    }
+    
+    if(is_wp_error($result)) throw new Exception("INSERT_USER_ERROR: {$result->get_error_message()}");
+
+	$did_it_work = user_login($filteredUsername, $salesforceUserEmail);
 	
 	if(!$did_it_work) throw new Exception("LOGIN_ERROR: The new user did not get logged in.");
 
-    wp_safe_redirect( home_url() );
+    wp_safe_redirect(home_url());
 
     exit;
+}
+
+function wp_update_existing_user($id, $params){
+
+    $params["ID"] = $id;
+    return wp_update_user($params);
 }
 
 
 // Figure out how to check for exsiting username AND existing email.
 // If either one exists user insert will fail.
-function user_already_exists($data) {
+function get_existing_wp_user_id($username, $email) {
 
-    $userId = username_exists($data["wp_complient_username"]);
+    $userId = username_exists($username);
 
     if(!$userId) {
 
-        $user = get_user_by("email", $data["email"]);
-        $userId = !empty($user->data->ID) ? $user->data->ID : false;
+        $user = get_user_by("email", $email);
+        $userId = $user->data->ID;
     }
 
-	return $userId;
+	return $userId == false || empty("userId") ? null : $userId;
 }
 
 
 
 
-function user_login($uInfo) {
+function user_login($username, $email) {
 
-    $user = get_user_by('email', $uInfo["email"]);
+    $user = get_user_by('email', $email);
 
     if(!$user){
 
-        $user = get_user_by('login', $uInfo["wp_complient_username"]);
+        $user = get_user_by('login', $username);
     }
-
-    if(is_wp_error($user)) throw new Exception($user->get_error_message());
-
 
     if($user != false){
 
@@ -233,8 +246,8 @@ function salesforce_oauth_url_customer(){
 function getTestUserInfo(){
 
     $info = array(
-        "user_type" => "STANDARD",
-        "preferred_username" => "trevoruehlinx1",
+        "user_type"             => "CustomerSuccess",
+        "preferred_username"    => "trevoruehlinx1@gmail.com",
         "given_name"            => "Trevor",
         "family_name"           => "Uehlin",
         "email"                 => "email@example3.com"
