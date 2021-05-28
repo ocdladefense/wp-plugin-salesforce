@@ -25,9 +25,6 @@ function get_querystring_value($key) {
 function process_oauth_redirect_uri() {
 
 	$request_uri = explode("?",$_SERVER["REQUEST_URI"])[0];
-	
-	// Has to be able to figure out $request_uri when WordPress is installed in a "subdirectory".
-	// E.g., when $request_uri == "/ocdla-prod/sso-callback".
 
 	if($request_uri != DOMAIN . "/sso-callback") return;
 
@@ -46,12 +43,10 @@ function process_oauth_redirect_uri() {
 	$flow = $config->getFlowConfig("webserver", $domain);
 
 
-
 	// Get an access token and an instance url from the "OAuthResponse".
 	$oauth = OAuthRequest::newAccessTokenRequest($config, $flow);
 
 	$resp = $oauth->authorize();
-
 
 	if(!$resp->success()) throw new Exception("OAUTH_ERROR: {$resp->getErrorMessage()}");
 
