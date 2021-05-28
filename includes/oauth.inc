@@ -61,13 +61,8 @@ function process_oauth_redirect_uri() {
 	//$uInfo = get_user_info($instanceUrl,$accessToken);
     $uInfo = getTestUserInfo();
 
-	// Get the salesforce user's "preferred username" from the "user info".
-	$username = getWpCompliantUsername($uInfo["preferred_username"]);
-
-
 	// If the salesforce user does not exist in the wordpress database, create a wordpress user using the salesforce "user info".
-	  
-	$uInfo["wp_complient_name"] = $username;
+	$uInfo["wp_complient_name"] = getWpCompliantUsername($uInfo["preferred_username"]);
 
     $id = user_already_exists($uInfo) ? user_already_exists($uInfo) : null;
 
@@ -76,7 +71,7 @@ function process_oauth_redirect_uri() {
     $params = array(
         "ID"            => $id,
         "role"          => $role,
-        "user_login"    => $username,
+        "user_login"    => $uInfo["wp_complient_name"],
         "first_name"    => $uInfo["given_name"],
         "last_name"     => $uInfo["family_name"],
         "user_email"    => $uInfo["email"]
@@ -244,7 +239,7 @@ function getTestUserInfo(){
 
     $info = array(
         "user_type" => "STANDARD",
-        "preferred_username" => "trevoruehlinx7",
+        "preferred_username" => "trevoruehlinx1",
         "given_name"            => "Trevor",
         "family_name"           => "Uehlin",
         "email"                 => "email@example3.com"
