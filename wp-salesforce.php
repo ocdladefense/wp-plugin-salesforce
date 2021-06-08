@@ -6,7 +6,7 @@
 /*
 Plugin Name: Salesforce Plugin
 Plugin URI: 
-Description: This is a plugin that ...
+Description: Connect app to Salesforce
 Version: 1.0.0
 Author: Ruslan Kalashnikov
 Author URI: https://www.ocdla.org/
@@ -22,27 +22,6 @@ defined('ABSPATH') or die('You shall not pass!');
 
 // Setting a CONSTANT for the plugin dir path
 define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
-
-// Adding a template to the 'Page Attributes' dropdown and including our custom template
-//add_filter('theme_page_templates', 'add_page_template');
-//add_filter('template_include', 'include_page_template', 99);
-
-//function add_page_template($templates)
-//{
-//$templates[MY_PLUGIN_DIR . 'templates/test-tpl.php'] = __('Template from plugin', 'text-domain');
-//return $templates;
-//}
-
-//function include_page_template($template)
-//{
-//$newTemplate = MY_PLUGIN_DIR . '/templates/test-tpl.php';
-
-//if (file_exists($newTemplate)) {
-//return $newTemplate;
-//}
-
-//return $template;
-//}
 
 function load_api()
 {
@@ -86,4 +65,3 @@ function load_api()
 }
 
 add_action('connect_and_query', 'load_api');
-//add_action('wp_loaded', 'get_committee_records');
