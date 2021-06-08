@@ -9,9 +9,9 @@
 /*
 Plugin Name: Salesforce Plugin
 Plugin URI: 
-Description: This is a plugin that ...
-Version: 1.0.0
-Author: Ruslan Kalashnikov
+Description: Connect to the Salesforce Lightning Platform.
+Version: 2.0.0
+Author: José Bernal
 Author URI: https://www.ocdla.org/
 License: GPLv2 or later
 Text Domain: wp-salesforce-plugin
