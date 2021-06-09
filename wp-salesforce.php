@@ -1,6 +1,7 @@
 <?php
 
-
+use Salesforce\OAuthRequest;
+use Salesforce\RestApiRequest;
 
 /**
  * @package SalesforcePlugin
@@ -23,12 +24,12 @@ defined('ABSPATH') or die('You shall not pass!');
 
 
 // Setting a CONSTANT for the plugin dir path
-define('MY_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('WP_SALESFORCE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 include WP_CONTENT_DIR . "/oauth-config.php";
-require MY_PLUGIN_DIR . "/includes/globals.php";
-require MY_PLUGIN_DIR . "/includes/oauth.inc";
-require MY_PLUGIN_DIR . "/includes/redirect.inc";
+require WP_SALESFORCE_PLUGIN_DIR . "/includes/globals.php";
+require WP_SALESFORCE_PLUGIN_DIR . "/includes/oauth.inc";
+require WP_SALESFORCE_PLUGIN_DIR . "/includes/redirect.inc";
 
 
 
@@ -44,3 +45,18 @@ add_action( 'init', 'process_oauth_redirect_uri' );
 
 add_action('wp_logout','auto_redirect_after_logout');
 
+
+function load_api(){
+    
+    $config = get_oauth_config();
+
+    $flowConfig = $config->getFlowConfig();
+
+    $req = OAuthRequest::newAccessTokenRequest($config, $flowConfig);
+
+    $resp = $req->authorize();
+
+    if (!$resp->success()) throw new Exception("OAUTH_RESPONSE_ERROR: {$resp->getErrorMessage()}");
+
+    return new RestApiRequest($resp->getInstanceUrl(), $resp->getAccessToken());
+}

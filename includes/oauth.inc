@@ -38,8 +38,6 @@ function process_oauth_redirect_uri() {
 
 	$domain = $state->domain;
 
-	$flowConfig = OAuthConfig::parseFlowConfig("webserver", $domain);
-
 	$flow = $config->getFlowConfig("webserver", $domain);
 
 
@@ -55,6 +53,8 @@ function process_oauth_redirect_uri() {
 
 	$uInfo = get_user_info($instanceUrl,$accessToken);
     //$uInfo = getTestUserInfo();
+
+    //var_dump($uInfo);exit;
 
     $salesforceUsername = $uInfo["preferred_username"];
     $salesforceUserType = $uInfo["user_type"];
