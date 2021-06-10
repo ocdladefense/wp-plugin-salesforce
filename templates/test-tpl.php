@@ -1,3 +1,3 @@
 <?php ?>
 
-<h1>This is a Template pulled from the plugin</h1>
+<h1>Hello World</h1>
