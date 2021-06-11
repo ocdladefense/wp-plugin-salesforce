@@ -16,9 +16,6 @@ function query_vars($vars) {
 	if ( $vars['name'] == 'sso-login') {
 		$vars['sso-login'] = true;
 	}
-	if ( $vars['name'] == 'sso-callback') {
-		$vars['sso-callback'] = true;
-	}
 
 	return $vars;
 }
@@ -28,12 +25,6 @@ function setting_template($template) {
 	if (get_query_var('sso-login')) {
 
 		return locate_template('sso-login.php',false);
-		exit;
-	}
-	if (get_query_var('sso-callback')) {
-
-		return locate_template('sso-callback.php',false);
-		exit;
 	}
 	
 	return $template;
