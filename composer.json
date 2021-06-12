@@ -6,6 +6,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
+        "ocdladefense/wp-composer":"dev-main",
         "ocdladefense/lib-salesforce-rest-api": "dev-main"
     }
 }
