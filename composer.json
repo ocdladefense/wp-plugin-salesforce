@@ -2,7 +2,7 @@
 {
     "name": "ocdladefense/wp-salesforce",
     "description": "WordPress plugin to connect to Salesforce.",
-    "type": "wordpress-theme",
+    "type": "wordpress-plugin",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
