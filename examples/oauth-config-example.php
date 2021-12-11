@@ -117,3 +117,34 @@ function salesforce_oauth_url_customer(){
 }
 
 }
+
+
+
+
+################################# What Trevor is currently using #######################################################
+
+$oauth_config = array(
+    "ocdla-wordpress" => array(
+        "default" => true,
+        "sandbox" => true, // Might be used to determine domain for urls
+        "client_id" => "3MVG9cb9UNjJbdEztW.V9X7_BWbACdRQT_VXR1Mf5RwIct5vTe71HEcQPJS9yKiFiwULW.KLFfmIUl_hg8rf7",
+        "client_secret" => "B91C4AD672BE55440C0A1C22D2F5FFB2D21357E82DF522D08DC2D198624CF20D",
+        "auth" => array(
+            "saml" => array(),
+            "oauth" => array(
+                "usernamepassword" => array(
+                    "token_url" => "https://test.salesforce.com/services/oauth2/token",
+                    "username" => "membernation@ocdla.com.ocdpartial",
+                    "password" => "asdi49ir4",
+                    "security_token" => "4te6Z194Uw4SHVHYut71NJvV"
+                ),
+                "webserver" => array(
+                    "token_url" => "https://ocdpartial-ocdla.cs217.force.com/services/oauth2/token",
+                    "auth_url" => "https://ocdpartial-ocdla.cs217.force.com/services/oauth2/authorize",
+                    "redirect_url" => "https://www.ocdla.org/sso-callback",
+                    "callback_url" => "https://localhost/jobs"
+                )
+            )
+        )
+    )
+);
