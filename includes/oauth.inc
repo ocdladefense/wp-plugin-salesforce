@@ -38,11 +38,11 @@ function process_oauth_redirect_uri() {
 
 	$domain = $state->domain;
 
-	$flow = $config->getFlowConfig("webserver", $domain);
+	//$flow = $config->getFlowConfig("webserver", $domain);
 
 
 	// Get an access token and an instance url from the "OAuthResponse".
-	$oauth = OAuthRequest::newAccessTokenRequest($config, $flow);
+	$oauth = OAuthRequest::newAccessTokenRequest($config, "webserver");
 
 	$resp = $oauth->authorize();
 

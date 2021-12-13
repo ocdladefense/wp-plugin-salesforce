@@ -1,5 +1,7 @@
 <?php
 
+use Salesforce\OAuthConfig;
+
 
 function get_oauth_config($key = null) {
 
